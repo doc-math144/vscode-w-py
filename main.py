@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import logging
+import shutil
 
 # Ensure required packages are installed
 def install_package(package):
@@ -48,46 +49,107 @@ def extract_7z_file(file_path, extract_to):
         archive.extractall(path=extract_to)
     logging.info(f"Extracted {file_path} to {extract_to}")
 
-def create_dolphin_setup_directory():
-    setup_dir = os.path.join(os.path.dirname(__file__), 'dolphin_setup')
-    if not os.path.exists(setup_dir):
-        os.makedirs(setup_dir)
-        logging.info(f"Created directory for Dolphin setup: {setup_dir}")
-    return setup_dir
+def create_workspace_structure():
+    """Create all required directories in workspace"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    directories = {
+        'game': os.path.join(base_dir, 'game'),
+        'roms': os.path.join(base_dir, 'roms'),
+        'memcards': os.path.join(base_dir, 'memcards'),
+        'saves': os.path.join(base_dir, 'saves'),
+        'dolphin_setup': os.path.join(base_dir, 'dolphin_setup')
+    }
+    
+    for name, path in directories.items():
+        if not os.path.exists(path):
+            os.makedirs(path)
+            logging.info(f"Created directory: {path}")
+    
+    return directories
+
+def setup_game_paths():
+    """Setup and verify all game-related paths"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    game_dir = os.path.join(base_dir, 'game')
+    
+    # Find ISO file in game_to_include
+    source_dir = os.path.join(base_dir, 'game_to_include')
+    if os.path.exists(source_dir):
+        for file in os.listdir(source_dir):
+            if file.lower().endswith('.iso'):
+                source_file = os.path.join(source_dir, file)
+                target_file = os.path.join(game_dir, file)
+                if not os.path.exists(target_file):
+                    shutil.move(source_file, target_file)
+                    logging.info(f"Moved {file} to game directory")
+                return target_file
+    
+    logging.error("No ISO file found in game_to_include directory")
+    return None
 
 def main():
-    # Setup environment first
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Define base_dir here
+    
+    # Create workspace structure first
+    directories = create_workspace_structure()
+    
+    # Run venv_setup.py to ensure virtual environment and directories are set up
+    subprocess.check_call([sys.executable, "venv_setup.py"])
+
+    # Create and activate virtual environment
+    venv_dir = os.path.join(os.path.dirname(__file__), '.venv')
+    
+    # Ensure venv exists and dependencies are installed
     ensure_venv()
     ensure_directories()
 
-    # Install dependencies from requirements.txt
-    requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
-    install_dependencies(requirements_path)
+    # Set DOLPHIN_GAME_PATH environment variable to workspace game directory
+    os.environ['DOLPHIN_GAME_PATH'] = directories['game']
+    
+    # Setup game paths and move ISO file
+    iso_path = setup_game_paths()
+    if not iso_path:
+        sys.exit(1)
 
+    # Use system Python executable
+    python_path = sys.executable
+    
+    # Install dependencies in venv
+    requirements_path = os.path.join(base_dir, 'requirements.txt')
+    subprocess.check_call([python_path, "-m", "pip", "install", "-r", requirements_path])
+    
     # Create directory for Dolphin setup file
-    setup_dir = create_dolphin_setup_directory()
+    setup_dir = directories['dolphin_setup']
 
     # Download Dolphin setup file
-    dolphin_setup_url = "https://dl.dolphin-emu.org/releases/2412/dolphin-2412-x64.7z"  # Replace with actual URL
+    dolphin_setup_url = "https://dl.dolphin-emu.org/releases/2412/dolphin-2412-x64.7z"
     dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
-
-    # Extract and use the downloaded Dolphin setup file
+    
+    # Extract setup file
     extract_7z_file(dolphin_setup_path, setup_dir)
-    dolphin_path = os.path.join(setup_dir, "Dolphin-x64", "Dolphin.exe")
-
-    # Configure and start the emulator
+    
+    # Configure emulator paths using workspace directories
     config = GameCubeConfig(
-        dolphin_path=dolphin_path,
-        rom_directory=os.path.join(setup_dir, "roms"),
-        memcard_directory=os.path.join(setup_dir, "memcards"),
+        dolphin_path=os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe"),
+        rom_directory=directories['game'],
+        memcard_directory=directories['memcards'],
         controller_config={
             0: {"type": "GCPad", "device": 0}
         }
     )
+    
     emulator = GameCubeEmulator(config)
-    game_path = "C:/Users/docma/Desktop/dolphin-2407-x64/jeu gamecube rom/Super Mario Sunburn (70 S.iso"
-    if game_path:
-        emulator.start_game(game_path)
+    
+    # Launch Dolphin with the ISO file
+    if os.path.exists(config.dolphin_path):
+        emulator.start_game(iso_path)
+    else:
+        logging.error(f"Dolphin executable not found at: {config.dolphin_path}")
+
+    # Remove redundant game path check since we're using workspace path
+    if not os.path.exists(directories['game']):
+        logging.error("Game directory not found in workspace")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

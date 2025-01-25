@@ -71,6 +71,7 @@ vscode-w-py/
 ├── config.py               # Configuration file
 ├── controls.py             # Controls handling file
 ├── directories.py          # Directory setup file
+├── example_usage.py        # Example usage file
 ├── game.py                 # Main game loop file
 ├── gamecube.py             # GameCube emulator configuration and control file
 ├── graphics.py             # Graphics rendering file

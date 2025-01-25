@@ -10,4 +10,4 @@ config = GameCubeConfig(
 )
 
 emulator = GameCubeEmulator(config)
-emulator.start_game("C:/Games/GameCube/game.iso")
+emulator.start_game("game.iso")
