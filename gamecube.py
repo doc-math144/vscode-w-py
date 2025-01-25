@@ -10,6 +10,9 @@ class GameCubeConfig:
     rom_directory: str
     memcard_directory: str
     controller_config: dict
+    graphics_backend: str = "OGL"  # OpenGL backend instead of Null
+    window_width: int = 800
+    window_height: int = 600
 
 class GameCubeEmulator:
     def __init__(self, config: GameCubeConfig):
@@ -27,13 +30,16 @@ class GameCubeEmulator:
             logging.error(f"Invalid ROM file: {rom_path}")
             return False
         
+        # Updated command with graphics settings
         command = [
             self.config.dolphin_path,
             "--exec=" + rom_path,
-            "--batch",  # Skip GUI
-            "--config=Dolphin.Core.GFXBackend=Null",  # Minimal graphics
-            "--config=Dolphin.Core.SerialPort1=0",  # Disable Broadband Adapter
+            f"--config=Dolphin.Core.GFXBackend={self.config.graphics_backend}",
+            "--config=Dolphin.Core.SerialPort1=0",
+            f"--config=Display.WindowWidth={self.config.window_width}",
+            f"--config=Display.WindowHeight={self.config.window_height}"
         ]
+        
         logging.info(f"Starting game with command: {command}")
         
         try:
