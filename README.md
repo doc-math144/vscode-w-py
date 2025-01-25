@@ -1,18 +1,25 @@
 OKay first things first, i kmow i need to ask dolphin for that, i will, but this project need to be done xD 2025-01-25
 i will ensure to ask them everything before posting so on this date january 25, this link is not open public... saddd... but yeah ill try to make it WORK peace!!
 
-
-
-
 # GameCube Emulator Setup
 
 This project sets up a GameCube emulator using the Dolphin emulator and runs a specified GameCube ROM.
+
+## Features
+- Automatic Dolphin emulator setup and configuration
+- GameCube ROM management and launching
+- Window control features:
+  - Fullscreen toggle
+  - Window positioning
+  - Window size management
+  - State preservation
 
 ## Prerequisites
 
 - Python 3.x
 - Git
 - Internet connection for downloading dependencies and Dolphin setup file
+- Windows OS (for window control features)
 
 ## Setup Instructions
 
@@ -43,6 +50,13 @@ This project sets up a GameCube emulator using the Dolphin emulator and runs a s
 - **Dolphin Setup URL**: Update the `dolphin_setup_url` variable in `main.py` with the actual URL to download the Dolphin setup file.
 - **Dolphin Executable Path**: Ensure the `dolphin_path` variable in `main.py` points to the correct Dolphin executable.
 - **ROM Path**: Update the `game_path` variable in `main.py` with the path to your GameCube ROM file.
+- **Window Settings**: Configure default window position/size in `main.py`
+
+## Window Controls
+- Press F11 to toggle fullscreen
+- Window position is automatically centered on startup
+- Window state is preserved between sessions
+- Custom window sizes can be configured
 
 ## Project Structure
 
@@ -75,6 +89,9 @@ After completing the setup instructions, the game should automatically start usi
 - Ensure all paths in `main.py` are correctly set.
 - Verify that the Dolphin setup URL is correct and accessible.
 - Check the logs for any error messages and resolve them accordingly.
+- If window controls don't work, ensure pywin32 is properly installed
+- For window detection issues, try restarting the emulator
+- Check Windows permissions if window manipulation fails
 
 ## License
 
