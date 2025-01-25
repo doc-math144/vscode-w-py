@@ -76,7 +76,7 @@ def setup_game_paths():
     source_dir = os.path.join(base_dir, 'game_to_include')
     if os.path.exists(source_dir):
         for file in os.listdir(source_dir):
-            if file.lower().endswith('.iso'):
+            if file.lower().endswith('.iso') and file.lower() != 'exemple.iso':
                 source_file = os.path.join(source_dir, file)
                 target_file = os.path.join(game_dir, file)
                 if not os.path.exists(target_file):
@@ -84,8 +84,30 @@ def setup_game_paths():
                     logging.info(f"Moved {file} to game directory")
                 return target_file
     
-    logging.error("No ISO file found in game_to_include directory")
+    # If no ISO file found in game_to_include, check game directory
+    for file in os.listdir(game_dir):
+        if file.lower().endswith('.iso'):
+            return os.path.join(game_dir, file)
+    
+    logging.error("No ISO file found in game_to_include or game directory")
     return None
+
+def move_ini_files(dolphin_setup_dir):
+    """Move all .ini files to dolphin_setup\Dolphin-x64\Sys\Profiles\GCpad\ and create folder if it doesn't exist"""
+    ini_source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'profiles_to_include')
+    ini_target_dir = os.path.join(dolphin_setup_dir, 'Dolphin-x64', 'Sys', 'Profiles', 'GCpad')
+    
+    if not os.path.exists(ini_target_dir):
+        os.makedirs(ini_target_dir)
+        logging.info(f"Created directory: {ini_target_dir}")
+    
+    for file in os.listdir(ini_source_dir):
+        if file.lower().endswith('.ini'):
+            source_file = os.path.join(ini_source_dir, file)
+            target_file = os.path.join(ini_target_dir, file)
+            if not os.path.exists(target_file):
+                shutil.move(source_file, target_file)
+                logging.info(f"Moved {file} to {ini_target_dir}")
 
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Define base_dir here
@@ -126,7 +148,9 @@ def main():
     dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
     
     # Extract setup file
-    extract_7z_file(dolphin_setup_path, setup_dir)
+    extract_7z_file(dolphin_setup_path, setup_dir)    
+    # Move .ini files to the appropriate directory
+    move_ini_files(setup_dir)
     
     # Configure emulator paths using workspace directories
     config = GameCubeConfig(
