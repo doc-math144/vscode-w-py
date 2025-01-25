@@ -1,2 +1,9 @@
 .venv/
 __pycache__/
+data/
+logs/
+models/
+assets/
+notebooks/
+dolphin_setup/
+dolphin/
