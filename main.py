@@ -3,10 +3,23 @@ import sys
 import subprocess
 import logging
 import shutil
+import psutil  # Add this import to check for running processes
 
 # Ensure required packages are installed
 def install_package(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    try:
+        # Get path to venv Python interpreter
+        if os.name == 'nt':  # Windows
+            python_path = os.path.join('.venv', 'Scripts', 'python.exe')
+        else:  # Unix
+            python_path = os.path.join('.venv', 'bin', 'python')
+            
+        # Install package in venv
+        subprocess.check_call([python_path, "-m", "pip", "install", package])
+        logging.info(f"Successfully installed {package}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Failed to install {package}: {e}")
+        sys.exit(1)
 
 try:
     import requests
@@ -93,7 +106,7 @@ def setup_game_paths():
     return None
 
 def move_ini_files(dolphin_setup_dir):
-    """Move all .ini files to dolphin_setup\Dolphin-x64\Sys\Profiles\GCpad\ and create folder if it doesn't exist"""
+    """Move all .ini files to dolphin_setup\\Dolphin-x64\\Sys\\Profiles\\GCpad\\ and create folder if it doesn't exist"""
     ini_source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'profiles_to_include')
     ini_target_dir = os.path.join(dolphin_setup_dir, 'Dolphin-x64', 'Sys', 'Profiles', 'GCpad')
     
@@ -109,8 +122,19 @@ def move_ini_files(dolphin_setup_dir):
                 shutil.copy(source_file, target_file)
                 logging.info(f"Copied {file} to {ini_target_dir}")
 
+def is_dolphin_running():
+    """Check if Dolphin process is running"""
+    for proc in psutil.process_iter(['pid', 'name']):
+        if 'dolphin' in proc.info['name'].lower():
+            return True
+    return False
+
 def clean_directories():
     """Delete all directories created by the script"""
+    if is_dolphin_running():
+        print("Dolphin is running. Please close Dolphin before cleaning directories.")
+        return
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     directories = [
         'game',

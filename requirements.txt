@@ -1,5 +1,9 @@
+charset_normalizer
+idna
+rich
+requests
+py7zr
+psutil
 numpy
 pygame
 cmake
-requests
-py7zr
