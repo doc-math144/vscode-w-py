@@ -80,8 +80,8 @@ def setup_game_paths():
                 source_file = os.path.join(source_dir, file)
                 target_file = os.path.join(game_dir, file)
                 if not os.path.exists(target_file):
-                    shutil.move(source_file, target_file)
-                    logging.info(f"Moved {file} to game directory")
+                    shutil.copy(source_file, target_file)
+                    logging.info(f"Copied {file} to game directory")
                 return target_file
     
     # If no ISO file found in game_to_include, check game directory
@@ -106,8 +106,8 @@ def move_ini_files(dolphin_setup_dir):
             source_file = os.path.join(ini_source_dir, file)
             target_file = os.path.join(ini_target_dir, file)
             if not os.path.exists(target_file):
-                shutil.move(source_file, target_file)
-                logging.info(f"Moved {file} to {ini_target_dir}")
+                shutil.copy(source_file, target_file)
+                logging.info(f"Copied {file} to {ini_target_dir}")
 
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Define base_dir here
