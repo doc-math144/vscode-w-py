@@ -8,11 +8,6 @@ This project sets up a GameCube emulator using the Dolphin emulator and runs a s
 ## Features
 - Automatic Dolphin emulator setup and configuration
 - GameCube ROM management and launching
-- Window control features:
-  - Fullscreen toggle
-  - Window positioning
-  - Window size management
-  - State preservation
 
 ## Prerequisites
 
@@ -50,28 +45,18 @@ This project sets up a GameCube emulator using the Dolphin emulator and runs a s
 - **Dolphin Setup URL**: Update the `dolphin_setup_url` variable in `main.py` with the actual URL to download the Dolphin setup file.
 - **Dolphin Executable Path**: Ensure the `dolphin_path` variable in `main.py` points to the correct Dolphin executable.
 - **ROM Path**: Update the `game_path` variable in `main.py` with the path to your GameCube ROM file.
-- **Window Settings**: Configure default window position/size in `main.py`
-
-## Window Controls
-- Press F11 to toggle fullscreen
-- Window position is automatically centered on startup
-- Window state is preserved between sessions
-- Custom window sizes can be configured
 
 ## Project Structure
 
 ```
 vscode-w-py/
 ├── .venv/                  # Virtual environment directory
-├── assets/                 # Assets directory
-├── data/                   # Data directory
-├── dolphin_setup/          # Directory for storing Dolphin setup file
-├── logs/                   # Logs directory
-├── notebooks/              # Notebooks directory
+├── game_to_include/        # Directory for including game ROMs
+├── profiles_to_include/    # Directory for including controller profiles
+├── .vscode/                # VSCode configuration directory
 ├── config.py               # Configuration file
 ├── controls.py             # Controls handling file
 ├── directories.py          # Directory setup file
-├── example_usage.py        # Example usage file
 ├── game.py                 # Main game loop file
 ├── gamecube.py             # GameCube emulator configuration and control file
 ├── graphics.py             # Graphics rendering file
@@ -90,9 +75,6 @@ After completing the setup instructions, the game should automatically start usi
 - Ensure all paths in `main.py` are correctly set.
 - Verify that the Dolphin setup URL is correct and accessible.
 - Check the logs for any error messages and resolve them accordingly.
-- If window controls don't work, ensure pywin32 is properly installed
-- For window detection issues, try restarting the emulator
-- Check Windows permissions if window manipulation fails
 
 ## License
 
