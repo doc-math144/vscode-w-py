@@ -109,7 +109,53 @@ def move_ini_files(dolphin_setup_dir):
                 shutil.copy(source_file, target_file)
                 logging.info(f"Copied {file} to {ini_target_dir}")
 
+def clean_directories():
+    """Delete all directories created by the script"""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    directories = [
+        'game',
+        'roms',
+        'memcards',
+        'saves',
+        'dolphin_setup',
+        '.venv',
+        'logs',
+        'temp',
+        'cache',
+        'build',
+        'dist',
+        'data',
+        'assets',
+        '__pycache__'
+    ]
+    
+    for dir_name in directories:
+        dir_path = os.path.join(base_dir, dir_name)
+        if os.path.exists(dir_path):
+            try:
+                shutil.rmtree(dir_path)
+                print(f"Deleted directory: {dir_path}")
+            except PermissionError as e:
+                print(f"PermissionError: {e} - Could not delete {dir_path}")
+            except Exception as e:
+                print(f"Error: {e} - Could not delete {dir_path}")
+
+    # Ensure dolphin_setup is deleted
+    dolphin_setup_path = os.path.join(base_dir, 'dolphin_setup')
+    if os.path.exists(dolphin_setup_path):
+        try:
+            shutil.rmtree(dolphin_setup_path)
+            print(f"Deleted directory: {dolphin_setup_path}")
+        except PermissionError as e:
+            print(f"PermissionError: {e} - Could not delete {dolphin_setup_path}")
+        except Exception as e:
+            print(f"Error: {e} - Could not delete {dolphin_setup_path}")
+
 def main():
+    if "--clean" in sys.argv:
+        clean_directories()
+        return
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Define base_dir here
     
     # Create workspace structure first

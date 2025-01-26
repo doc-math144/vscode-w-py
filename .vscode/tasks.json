@@ -29,6 +29,30 @@
                 "isDefault": false
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Clean directories",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "main.py",
+                "--clean"
+            ],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean All",
+            "dependsOn": ["Clean .venv", "Clean directories"],
+            "dependsOrder": "parallel",
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            },
+            "problemMatcher": []
         }
     ]
 }
