@@ -2,25 +2,20 @@ import os
 import sys
 import subprocess
 import logging
-import shutil
-import psutil  # Add this import to check for running processes
+import threading
+import time
 
-# Ensure required packages are installed
-def install_package(package):
-    try:
-        # Get path to venv Python interpreter
-        if os.name == 'nt':  # Windows
-            python_path = os.path.join('.venv', 'Scripts', 'python.exe')
-        else:  # Unix
-            python_path = os.path.join('.venv', 'bin', 'python')
-            
-        # Install package in venv
-        subprocess.check_call([python_path, "-m", "pip", "install", package])
-        logging.info(f"Successfully installed {package}")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to install {package}: {e}")
-        sys.exit(1)
+from package_manager import install_package, install_dependencies
+from file_handler import download_dolphin_setup, extract_7z_file, move_ini_files
+from workspace import create_workspace_structure, setup_game_paths, clean_directories
+from venv_setup import ensure_venv
+from directories import ensure_directories
+from gamecube import GameCubeConfig, GameCubeEmulator
 
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Ensure required packages
 try:
     import requests
 except ImportError:
@@ -31,198 +26,44 @@ try:
     import py7zr
 except ImportError:
     install_package("py7zr")
-    
-from venv_setup import ensure_venv
-from directories import ensure_directories
-from gamecube import GameCubeConfig, GameCubeEmulator
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-def install_dependencies(requirements_path):
+def start_web_server():
     try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path])
-        logging.info("Dependencies installed successfully.")
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to install dependencies: {e}")
-        sys.exit(1)
-
-def download_dolphin_setup(url, setup_dir):
-    local_filename = os.path.join(setup_dir, url.split('/')[-1])
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    logging.info(f"Downloaded Dolphin setup file to: {local_filename}")
-    return local_filename
-
-def extract_7z_file(file_path, extract_to):
-    with py7zr.SevenZipFile(file_path, mode='r') as archive:
-        archive.extractall(path=extract_to)
-    logging.info(f"Extracted {file_path} to {extract_to}")
-
-def create_workspace_structure():
-    """Create all required directories in workspace"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    directories = {
-        'game': os.path.join(base_dir, 'game'),
-        'roms': os.path.join(base_dir, 'roms'),
-        'memcards': os.path.join(base_dir, 'memcards'),
-        'saves': os.path.join(base_dir, 'saves'),
-        'dolphin_setup': os.path.join(base_dir, 'dolphin_setup')
-    }
-    
-    for name, path in directories.items():
-        if not os.path.exists(path):
-            os.makedirs(path)
-            logging.info(f"Created directory: {path}")
-    
-    return directories
-
-def setup_game_paths():
-    """Setup and verify all game-related paths"""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    game_dir = os.path.join(base_dir, 'game')
-    
-    # Find ISO file in game_to_include
-    source_dir = os.path.join(base_dir, 'game_to_include')
-    if os.path.exists(source_dir):
-        for file in os.listdir(source_dir):
-            if file.lower().endswith('.iso') and file.lower() != 'exemple.iso':
-                source_file = os.path.join(source_dir, file)
-                target_file = os.path.join(game_dir, file)
-                if not os.path.exists(target_file):
-                    shutil.copy(source_file, target_file)
-                    logging.info(f"Copied {file} to game directory")
-                return target_file
-    
-    # If no ISO file found in game_to_include, check game directory
-    for file in os.listdir(game_dir):
-        if file.lower().endswith('.iso'):
-            return os.path.join(game_dir, file)
-    
-    logging.error("No ISO file found in game_to_include or game directory")
-    return None
-
-def move_ini_files(dolphin_setup_dir):
-    """Move all .ini files to dolphin_setup\\Dolphin-x64\\Sys\\Profiles\\GCpad\\ and create folder if it doesn't exist"""
-    ini_source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'profiles_to_include')
-    ini_target_dir = os.path.join(dolphin_setup_dir, 'Dolphin-x64', 'Sys', 'Profiles', 'GCpad')
-    
-    if not os.path.exists(ini_target_dir):
-        os.makedirs(ini_target_dir)
-        logging.info(f"Created directory: {ini_target_dir}")
-    
-    for file in os.listdir(ini_source_dir):
-        if file.lower().endswith('.ini'):
-            source_file = os.path.join(ini_source_dir, file)
-            target_file = os.path.join(ini_target_dir, file)
-            if not os.path.exists(target_file):
-                shutil.copy(source_file, target_file)
-                logging.info(f"Copied {file} to {ini_target_dir}")
-
-def is_dolphin_running():
-    """Check if Dolphin process is running"""
-    for proc in psutil.process_iter(['pid', 'name']):
-        if 'dolphin' in proc.info['name'].lower():
-            return True
-    return False
-
-def clean_directories():
-    """Delete all directories created by the script"""
-    if is_dolphin_running():
-        print("Dolphin is running. Please close Dolphin before cleaning directories.")
-        return
-
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    directories = [
-        'game',
-        'roms',
-        'memcards',
-        'saves',
-        'dolphin_setup',
-        '.venv',
-        'logs',
-        'temp',
-        'cache',
-        'build',
-        'dist',
-        'data',
-        'assets',
-        '__pycache__'
-    ]
-    
-    for dir_name in directories:
-        dir_path = os.path.join(base_dir, dir_name)
-        if os.path.exists(dir_path):
-            try:
-                shutil.rmtree(dir_path)
-                print(f"Deleted directory: {dir_path}")
-            except PermissionError as e:
-                print(f"PermissionError: {e} - Could not delete {dir_path}")
-            except Exception as e:
-                print(f"Error: {e} - Could not delete {dir_path}")
-
-    # Ensure dolphin_setup is deleted
-    dolphin_setup_path = os.path.join(base_dir, 'dolphin_setup')
-    if os.path.exists(dolphin_setup_path):
-        try:
-            shutil.rmtree(dolphin_setup_path)
-            print(f"Deleted directory: {dolphin_setup_path}")
-        except PermissionError as e:
-            print(f"PermissionError: {e} - Could not delete {dolphin_setup_path}")
-        except Exception as e:
-            print(f"Error: {e} - Could not delete {dolphin_setup_path}")
+        # Wait a bit to ensure Dolphin window is ready
+        time.sleep(3)
+        subprocess.Popen([sys.executable, "web-projector.py"])
+        logging.info("Web streaming server started")
+    except Exception as e:
+        logging.error(f"Failed to start web server: {e}")
 
 def main():
     if "--clean" in sys.argv:
         clean_directories()
         return
     
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # Define base_dir here
-    
-    # Create workspace structure first
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     directories = create_workspace_structure()
     
-    # Run venv_setup.py to ensure virtual environment and directories are set up
     subprocess.check_call([sys.executable, "venv_setup.py"])
-
-    # Create and activate virtual environment
-    venv_dir = os.path.join(os.path.dirname(__file__), '.venv')
-    
-    # Ensure venv exists and dependencies are installed
     ensure_venv()
     ensure_directories()
 
-    # Set DOLPHIN_GAME_PATH environment variable to workspace game directory
     os.environ['DOLPHIN_GAME_PATH'] = directories['game']
     
-    # Setup game paths and move ISO file
     iso_path = setup_game_paths()
     if not iso_path:
         sys.exit(1)
 
-    # Use system Python executable
-    python_path = sys.executable
-    
-    # Install dependencies in venv
     requirements_path = os.path.join(base_dir, 'requirements.txt')
-    subprocess.check_call([python_path, "-m", "pip", "install", "-r", requirements_path])
+    install_dependencies(requirements_path)
     
-    # Create directory for Dolphin setup file
     setup_dir = directories['dolphin_setup']
-
-    # Download Dolphin setup file
     dolphin_setup_url = "https://dl.dolphin-emu.org/releases/2412/dolphin-2412-x64.7z"
     dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
     
-    # Extract setup file
-    extract_7z_file(dolphin_setup_path, setup_dir)    
-    # Move .ini files to the appropriate directory
+    extract_7z_file(dolphin_setup_path, setup_dir)
     move_ini_files(setup_dir)
     
-    # Configure emulator paths using workspace directories
     config = GameCubeConfig(
         dolphin_path=os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe"),
         rom_directory=directories['game'],
@@ -234,13 +75,27 @@ def main():
     
     emulator = GameCubeEmulator(config)
     
-    # Launch Dolphin with the ISO file
     if os.path.exists(config.dolphin_path):
-        emulator.start_game(iso_path)
+        try:
+            # Start emulator first
+            emulator.start_game(iso_path)
+            logging.info("Dolphin emulator started successfully")
+            
+            # Start web server in a separate thread
+            web_thread = threading.Thread(target=start_web_server, daemon=True)
+            web_thread.start()
+            
+            # Keep main thread alive
+            while True:
+                time.sleep(1)
+                
+        except KeyboardInterrupt:
+            logging.info("Shutting down...")
+        except Exception as e:
+            logging.error(f"Error during execution: {e}")
     else:
         logging.error(f"Dolphin executable not found at: {config.dolphin_path}")
 
-    # Remove redundant game path check since we're using workspace path
     if not os.path.exists(directories['game']):
         logging.error("Game directory not found in workspace")
         sys.exit(1)

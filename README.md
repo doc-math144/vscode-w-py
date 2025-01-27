@@ -3,18 +3,25 @@ i will ensure to ask them everything before posting so on this date january 25, 
 
 # GameCube Emulator Setup
 
-This project sets up a GameCube emulator using the Dolphin emulator and runs a specified GameCube ROM.
+A Python-based automation project for setting up and configuring the Dolphin GameCube emulator. This project aims to eventually enable browser-based GameCube gameplay through web streaming technology.
 
 ## Features
-- Automatic Dolphin emulator setup and configuration
-- GameCube ROM management and launching
+- Automated Dolphin emulator installation and configuration
+- Controller profile management
+- ROM file handling and launching
+- Window management automation
+- Future Features:
+  - Browser-based game streaming
+  - Online multiplayer support
+  - Low-latency video encoding
+  - Web-based controller input
 
 ## Prerequisites
 
 - Python 3.x
 - Git
-- Internet connection for downloading dependencies and Dolphin setup file
-- Windows OS (for window control features)
+- Windows OS
+- Internet connection
 
 ## Setup Instructions
 
@@ -35,46 +42,72 @@ This project sets up a GameCube emulator using the Dolphin emulator and runs a s
     pip install -r requirements.txt
     ```
 
-4. **Run the setup script**:
+4. **Run the application**:
     ```sh
     python main.py
     ```
-
-## Configuration
-
-- **Dolphin Setup URL**: Update the `dolphin_setup_url` variable in `main.py` with the actual URL to download the Dolphin setup file.
-- **Dolphin Executable Path**: Ensure the `dolphin_path` variable in `main.py` points to the correct Dolphin executable.
-- **ROM Path**: Update the `game_path` variable in `main.py` with the path to your GameCube ROM file.
 
 ## Project Structure
 
 ```
 vscode-w-py/
 ├── .venv/                  # Virtual environment directory
-├── game_to_include/        # Directory for including game ROMs
-├── profiles_to_include/    # Directory for including controller profiles
-├── .vscode/                # VSCode configuration directory
-├── config.py               # Configuration file
-├── controls.py             # Controls handling file
-├── directories.py          # Directory setup file
-├── game.py                 # Main game loop file
-├── gamecube.py             # GameCube emulator configuration and control file
-├── graphics.py             # Graphics rendering file
-├── main.py                 # Main setup and execution script
-├── requirements.txt        # Python dependencies file
-├── venv_setup.py           # Virtual environment setup file
-└── .gitignore              # Git ignore file
+├── game_to_include/        # GameCube ROM storage
+├── profiles_to_include/    # Controller profiles
+├── src/                    # Source code directory
+│   ├── config.py          # Configuration settings
+│   ├── controls.py        # Input handling
+│   ├── directories.py     # File system operations
+│   ├── game.py           # Game launch logic
+│   ├── gamecube.py       # Emulator interface
+│   └── graphics.py       # Display management
+├── main.py                # Entry point
+├── requirements.txt       # Dependencies
+└── README.md             # Documentation
 ```
 
-## Running the Game
+## Configuration
 
-After completing the setup instructions, the game should automatically start using the Dolphin emulator with the specified ROM file.
+Edit `src/config.py` to set:
+- Dolphin installation path
+- ROM directory location
+- Controller profile settings
+- Window management preferences
 
-## Troubleshooting
+## Usage
 
-- Ensure all paths in `main.py` are correctly set.
-- Verify that the Dolphin setup URL is correct and accessible.
-- Check the logs for any error messages and resolve them accordingly.
+1. Configure settings in `src/config.py`
+2. Place ROM files in `game_to_include/`
+3. Run the application:
+```sh
+python main.py
+```
+
+## Error Handling
+
+Common issues and solutions:
+- Path not found: Verify paths in config.py
+- Emulator launch failed: Check Dolphin installation
+- ROM loading error: Ensure ROM file integrity
+
+## Roadmap
+
+### Current
+- Local emulator automation
+- Basic configuration management
+
+### Planned
+- Web streaming server implementation
+- Browser-based game client
+- WebRTC video streaming
+- Remote controller input handling
+- Multi-user session management
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
 ## License
 
