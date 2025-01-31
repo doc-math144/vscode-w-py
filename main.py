@@ -4,6 +4,7 @@ import subprocess
 import logging
 import threading
 import time
+import psutil
 
 from package_manager import install_package, install_dependencies
 from file_handler import download_dolphin_setup, extract_7z_file, move_ini_files
@@ -27,20 +28,42 @@ try:
 except ImportError:
     install_package("py7zr")
 
+try:
+    import psutil
+except ImportError:
+    install_package("psutil")
+
 def start_web_server():
     try:
         # Wait a bit to ensure Dolphin window is ready
         time.sleep(3)
-        subprocess.Popen([sys.executable, "web-projector.py"])
-        logging.info("Web streaming server started")
+        for process in psutil.process_iter(['name']):
+            if process.info['name'].lower() == 'dolphin.exe':
+                subprocess.Popen([sys.executable, "web-projector.py"])
+                logging.info("Web streaming server started for existing Dolphin instance")
+                return True
+        logging.warning("No running Dolphin instance found")
+        return False
     except Exception as e:
         logging.error(f"Failed to start web server: {e}")
+        return False
 
 def main():
     if "--clean" in sys.argv:
         clean_directories()
         return
-    
+        
+    # First check if Dolphin is already running
+    for process in psutil.process_iter(['name']):
+        if process.info['name'].lower() == 'dolphin.exe':
+            logging.info("Found existing Dolphin instance")
+            web_thread = threading.Thread(target=start_web_server, daemon=True)
+            web_thread.start()
+            while True:
+                time.sleep(1)
+            return
+
+    # If no Dolphin instance found, continue with normal startup...
     base_dir = os.path.dirname(os.path.abspath(__file__))
     directories = create_workspace_structure()
     
