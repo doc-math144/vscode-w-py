@@ -5,6 +5,7 @@ import logging
 import threading
 import time
 import psutil
+import argparse
 
 from package_manager import install_package, install_dependencies
 from file_handler import download_dolphin_setup, extract_7z_file, move_ini_files
@@ -49,24 +50,27 @@ def start_web_server():
         return False
 
 def main():
-    if "--clean" in sys.argv:
+    parser = argparse.ArgumentParser(description="Dolphin Merge Tool")
+    parser.add_argument('--clean', action='store_true', help='Clean all created directories')
+    args = parser.parse_args()
+
+    if args.clean:
         clean_directories()
+        print("All created directories have been cleaned.")
         return
         
-    # First check if Dolphin is already running
-    for process in psutil.process_iter(['name']):
-        if process.info['name'].lower() == 'dolphin.exe':
-            logging.info("Found existing Dolphin instance")
-            web_thread = threading.Thread(target=start_web_server, daemon=True)
-            web_thread.start()
-            while True:
-                time.sleep(1)
-            return
-
-    # If no Dolphin instance found, continue with normal startup...
     base_dir = os.path.dirname(os.path.abspath(__file__))
     directories = create_workspace_structure()
     
+    # First check if Dolphin is already running
+    dolphin_running = False
+    for process in psutil.process_iter(['name']):
+        if process.info['name'].lower() == 'dolphin.exe':
+            logging.info("Found existing Dolphin instance")
+            dolphin_running = True
+            break
+
+    # Continue with setup regardless of Dolphin status
     subprocess.check_call([sys.executable, "venv_setup.py"])
     ensure_venv()
     ensure_directories()
@@ -82,11 +86,13 @@ def main():
     
     setup_dir = directories['dolphin_setup']
     dolphin_setup_url = "https://dl.dolphin-emu.org/releases/2412/dolphin-2412-x64.7z"
-    dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
     
-    extract_7z_file(dolphin_setup_path, setup_dir)
-    move_ini_files(setup_dir)
-    
+    # Setup Dolphin configuration even if already running
+    if not os.path.exists(os.path.join(setup_dir, "Dolphin-x64", "Dolphin.exe")):
+        dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
+        extract_7z_file(dolphin_setup_path, setup_dir)
+        move_ini_files(setup_dir)
+
     config = GameCubeConfig(
         dolphin_path=os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe"),
         rom_directory=directories['game'],
@@ -98,30 +104,26 @@ def main():
     
     emulator = GameCubeEmulator(config)
     
-    if os.path.exists(config.dolphin_path):
+    # Start web server in separate thread
+    web_thread = threading.Thread(target=start_web_server, daemon=True)
+    web_thread.start()
+
+    # Only launch new Dolphin instance if one isn't already running
+    if not dolphin_running and os.path.exists(config.dolphin_path):
         try:
-            # Start emulator first
             emulator.start_game(iso_path)
             logging.info("Dolphin emulator started successfully")
-            
-            # Start web server in a separate thread
-            web_thread = threading.Thread(target=start_web_server, daemon=True)
-            web_thread.start()
-            
-            # Keep main thread alive
-            while True:
-                time.sleep(1)
-                
-        except KeyboardInterrupt:
-            logging.info("Shutting down...")
         except Exception as e:
-            logging.error(f"Error during execution: {e}")
-    else:
-        logging.error(f"Dolphin executable not found at: {config.dolphin_path}")
-
-    if not os.path.exists(directories['game']):
-        logging.error("Game directory not found in workspace")
-        sys.exit(1)
+            logging.error(f"Error starting Dolphin: {e}")
+    
+    try:
+        # Keep main thread alive
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logging.info("Shutting down...")
+    except Exception as e:
+        logging.error(f"Error during execution: {e}")
 
 if __name__ == "__main__":
     main()

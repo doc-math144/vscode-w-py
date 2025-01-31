@@ -75,7 +75,7 @@ def generate_output():
         # Wait for Dolphin window to appear
         max_attempts = 30
         for attempt in range(max_attempts):
-            if any(win32gui.FindWindow(None, title) for title in ["Dolphin", "Dolphin Emulator"]):
+            if win32gui.FindWindow(None, "Dolphin 2412"):
                 logging.info("Dolphin window found!")
                 break
             logging.info(f"Waiting for Dolphin window... ({attempt + 1}/{max_attempts})")
@@ -96,7 +96,7 @@ def video_feed():
             return
 
         # Give Dolphin more time to initialize
-        time.sleep(5)
+        time.sleep(10)  # Increased delay
         
         frame_interval = 1/30
         last_frame = None

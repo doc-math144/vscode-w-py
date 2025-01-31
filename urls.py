@@ -9,13 +9,7 @@ import win32gui
 import win32ui
 import win32con
 
-DOLPHIN_WINDOW_TITLES = [
-    "Dolphin 2412",
-    "Dolphin.exe",
-    "Dolphin Emulator",
-    "Dolphin - NTSC",
-    "Dolphin - PAL"
-]
+DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC | OpenGL | HLE | Super Mario Sunburn (GMSE03)"
 
 # Create blueprint for routes
 main = Blueprint('main', __name__)
@@ -47,38 +41,37 @@ def register_error_handlers(app):
 def index():
     return render_template('index.html')
 
-def capture_dolphin_window(window_titles: list = DOLPHIN_WINDOW_TITLES) -> Optional[np.ndarray]:
-    for title in window_titles:
-        hwnd = win32gui.FindWindow(None, title)
-        if hwnd:
-            logging.info(f"Found Dolphin window with title: {title}")
-            try:
-                left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-                width = right - left
-                height = bottom - top
+def capture_dolphin_window(window_title: str = DOLPHIN_SPECIFIC_TITLE) -> Optional[np.ndarray]:
+    hwnd = win32gui.FindWindow(None, window_title)
+    if hwnd:
+        logging.info(f"Found Dolphin window with title: {window_title}")
+        try:
+            left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+            width = right - left
+            height = bottom - top
 
-                wDC = win32gui.GetWindowDC(hwnd)
-                dcObj = win32ui.CreateDCFromHandle(wDC)
-                cDC = dcObj.CreateCompatibleDC()
-                
-                dataBitMap = win32ui.CreateBitmap()
-                dataBitMap.CreateCompatibleBitmap(dcObj, width, height)
-                cDC.SelectObject(dataBitMap)
-                cDC.BitBlt((0, 0), (width, height), dcObj, (0, 0), win32con.SRCCOPY)
+            wDC = win32gui.GetWindowDC(hwnd)
+            dcObj = win32ui.CreateDCFromHandle(wDC)
+            cDC = dcObj.CreateCompatibleDC()
+            
+            dataBitMap = win32ui.CreateBitmap()
+            dataBitMap.CreateCompatibleBitmap(dcObj, width, height)
+            cDC.SelectObject(dataBitMap)
+            cDC.BitBlt((0, 0), (width, height), dcObj, (0, 0), win32con.SRCCOPY)
 
-                bmpstr = dataBitMap.GetBitmapBits(True)
-                img = np.frombuffer(bmpstr, dtype='uint8')
-                img.shape = (height, width, 4)
+            bmpstr = dataBitMap.GetBitmapBits(True)
+            img = np.frombuffer(bmpstr, dtype='uint8')
+            img.shape = (height, width, 4)
 
-                dcObj.DeleteDC()
-                cDC.DeleteDC()
-                win32gui.ReleaseDC(hwnd, wDC)
-                win32gui.DeleteObject(dataBitMap.GetHandle())
+            dcObj.DeleteDC()
+            cDC.DeleteDC()
+            win32gui.ReleaseDC(hwnd, wDC)
+            win32gui.DeleteObject(dataBitMap.GetHandle())
 
-                return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-            except Exception as e:
-                logging.error(f"Failed to capture window: {e}")
-                return None
+            return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+        except Exception as e:
+            logging.error(f"Failed to capture window: {e}")
+            return None
     
     return None
 

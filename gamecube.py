@@ -30,20 +30,25 @@ class GameCubeEmulator:
             logging.error(f"Invalid ROM file: {rom_path}")
             return False
         
-        # Updated command with graphics settings
         command = [
             self.config.dolphin_path,
             "--exec=" + rom_path,
-            f"--config=Dolphin.Core.GFXBackend={self.config.graphics_backend}",
+            "--batch",
+            "--config=Dolphin.Core.GFXBackend=" + self.config.graphics_backend,
             "--config=Dolphin.Core.SerialPort1=0",
-            f"--config=Display.WindowWidth={self.config.window_width}",
-            f"--config=Display.WindowHeight={self.config.window_height}"
+            "--config=Display.Fullscreen=False",  # Changed to windowed mode
+            "--config=Display.RenderToMain=True", # Ensure rendering to main window
+            "--config=Display.DisableScreenSaver=True"
         ]
         
         logging.info(f"Starting game with command: {command}")
         
         try:
-            self.process = subprocess.Popen(command)
+            # CREATE_NO_WINDOW flag hides the console window
+            self.process = subprocess.Popen(
+                command,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
             return True
         except FileNotFoundError as e:
             logging.error(f"Failed to start Dolphin emulator: {e}")
