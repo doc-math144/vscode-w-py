@@ -38,8 +38,17 @@ class GameCubeEmulator:
             "--config=Dolphin.Core.SerialPort1=0",
             "--config=Display.Fullscreen=False",  # Changed to windowed mode
             "--config=Display.RenderToMain=True", # Ensure rendering to main window
-            "--config=Display.DisableScreenSaver=True"
+            "--config=Display.DisableScreenSaver=True",
+            "--config=Display.Resolution=" + f"{self.config.window_width}x{self.config.window_height}"
         ]
+
+        # Add controller configurations
+        for port, controller in self.config.controller_config.items():
+            command.append(f"--config=GCPad{port}.Profile={controller}")
+        
+        # Add memory card configurations
+        command.append(f"--config=MemoryCardA.Path={os.path.join(self.config.memcard_directory, 'MemoryCardA.raw')}")
+        command.append(f"--config=MemoryCardB.Path={os.path.join(self.config.memcard_directory, 'MemoryCardB.raw')}")
         
         logging.info(f"Starting game with command: {command}")
         

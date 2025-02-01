@@ -19,7 +19,7 @@ from venv_setup import ensure_venv
 from directories import ensure_directories
 from gamecube import GameCubeConfig, GameCubeEmulator
 from urls import register_routes, register_error_handlers
-from capture import capture_dolphin_window_dynamic  # Import the new function
+from capture import capture_dolphin_window  # Import the function from capture.py
 
 app = Flask(__name__)
 
@@ -90,6 +90,8 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
+    directories = create_workspace_structure()
+    
     def gen_frames():
         if not os.path.exists(os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe")):
             logging.error("Dolphin executable not found!")
@@ -99,12 +101,11 @@ def video_feed():
         time.sleep(10)  # Increased delay
         
         frame_interval = 1/30
-        last_frame = None
         frames_without_window = 0
         
         while True:
             try:
-                frame = capture_dolphin_window_dynamic()
+                frame = capture_dolphin_window()
                 if frame is None:
                     frames_without_window += 1
                     if frames_without_window > 30:  # 3 seconds without finding window
@@ -114,7 +115,6 @@ def video_feed():
                     continue
                 
                 frames_without_window = 0
-                last_frame = frame
                 ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                 if not ret:
                     continue
