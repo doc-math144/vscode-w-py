@@ -82,7 +82,7 @@ def video_feed():
         # Give Dolphin more time to initialize
         time.sleep(10)  # Increased delay
         
-        frame_interval = 1/30
+        frame_interval = 1/60
         frames_without_window = 0
         
         while True:
