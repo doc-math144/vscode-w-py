@@ -37,7 +37,7 @@ def index():
 @main.route('/video_feed')
 def video_feed():
     def gen_frames():
-        retry_delay = 1.0  # seconds
+        retry_delay = 3.0  # seconds
         while True:
             frame = capture_dolphin_window()
             if frame is not None:

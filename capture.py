@@ -16,6 +16,9 @@ def capture_dolphin_window():
     CAPTURE_WIDTH = 3840  # Width of capture region
     CAPTURE_HEIGHT = 2160 # Height of capture region
 
+    TARGET_WIDTH = 1280  # 720p width
+    TARGET_HEIGHT = 720  # 720p height
+
     hwnd = win32gui.FindWindow(None, DOLPHIN_SPECIFIC_TITLE)
     if not hwnd:
         logging.error("Dolphin window not found")
@@ -43,7 +46,10 @@ def capture_dolphin_window():
         win32gui.ReleaseDC(hwnd, wDC)
         win32gui.DeleteObject(dataBitMap.GetHandle())
 
-        return img[..., :3]  # Return without alpha channel
+        # Resize image to 720p
+        resized_img = cv2.resize(img, (TARGET_WIDTH, TARGET_HEIGHT), interpolation=cv2.INTER_AREA)
+
+        return resized_img[..., :3]  # Return without alpha channel
 
     except Exception as e:
         logging.error(f"Capture failed: {str(e)}")
