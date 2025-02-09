@@ -15,7 +15,7 @@ from directories import ensure_directories
 from gamecube import GameCubeConfig, GameCubeEmulator
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(asctime)s - %(message)s')
 
 # Ensure required packages
 try:
@@ -34,15 +34,21 @@ try:
 except ImportError:
     install_package("psutil")
 
+def is_dolphin_running():
+    for process in psutil.process_iter(['name']):
+        if process.info['name'].lower() == 'dolphin.exe':
+            logging.info("Found existing Dolphin instance")
+            return True
+    return False
+
 def start_web_server():
     try:
         # Wait a bit to ensure Dolphin window is ready
         time.sleep(3)
-        for process in psutil.process_iter(['name']):
-            if process.info['name'].lower() == 'dolphin.exe':
-                subprocess.Popen([sys.executable, "web-projector.py"])
-                logging.info("Web streaming server started for existing Dolphin instance")
-                return True
+        if is_dolphin_running():
+            subprocess.Popen([sys.executable, "web-projector.py"])
+            logging.info("Web streaming server started for existing Dolphin instance")
+            return True
         logging.warning("No running Dolphin instance found")
         return False
     except Exception as e:
@@ -63,12 +69,7 @@ def main():
     directories = create_workspace_structure()
     
     # First check if Dolphin is already running
-    dolphin_running = False
-    for process in psutil.process_iter(['name']):
-        if process.info['name'].lower() == 'dolphin.exe':
-            logging.info("Found existing Dolphin instance")
-            dolphin_running = True
-            break
+    dolphin_running = is_dolphin_running()
 
     # Continue with setup regardless of Dolphin status
     subprocess.check_call([sys.executable, "venv_setup.py"])

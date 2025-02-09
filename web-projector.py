@@ -12,11 +12,6 @@ import win32con
 import time
 import psutil
 
-from package_manager import install_package, install_dependencies
-from file_handler import download_dolphin_setup, extract_7z_file, move_ini_files
-from workspace import create_workspace_structure, setup_game_paths, clean_directories
-from venv_setup import ensure_venv
-from directories import ensure_directories
 from gamecube import GameCubeConfig, GameCubeEmulator
 from urls import register_routes, register_error_handlers
 from capture import capture_dolphin_window  # Import the function from capture.py
@@ -33,39 +28,24 @@ def find_dolphin_path():
     return None
 
 def generate_output():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    directories = create_workspace_structure()
-    
-    subprocess.check_call([sys.executable, "venv_setup.py"])
-    ensure_venv()
-    ensure_directories()
+    # Get necessary paths and configurations from environment variables
+    dolphin_path = os.environ.get('DOLPHIN_PATH')
+    iso_path = os.environ.get('ISO_PATH')
+    memcard_directory = os.environ.get('MEMCARD_DIRECTORY')
 
-    os.environ['DOLPHIN_GAME_PATH'] = directories['game']
-    
-    iso_path = setup_game_paths()
-    if not iso_path:
-        yield "No ISO file found.<br/>\n"
+    if not all([dolphin_path, iso_path, memcard_directory]):
+        logging.error("Missing environment variables for Dolphin setup.")
         return
 
-    requirements_path = os.path.join(base_dir, 'requirements.txt')
-    install_dependencies(requirements_path)
-    
-    setup_dir = directories['dolphin_setup']
-    dolphin_setup_url = "https://dl.dolphin-emu.org/releases/2412/dolphin-2412-x64.7z"
-    dolphin_setup_path = download_dolphin_setup(dolphin_setup_url, setup_dir)
-    
-    extract_7z_file(dolphin_setup_path, setup_dir)
-    move_ini_files(setup_dir)
-    
     config = GameCubeConfig(
-        dolphin_path=find_dolphin_path() or os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe"),
-        rom_directory=directories['game'],
-        memcard_directory=directories['memcards'],
+        dolphin_path=dolphin_path,
+        rom_directory=os.path.dirname(iso_path),  # Extract directory from ISO path
+        memcard_directory=memcard_directory,
         controller_config={
             0: {"type": "GCPad", "device": 0}
         }
     )
-    
+
     emulator = GameCubeEmulator(config)
     
     if os.path.exists(config.dolphin_path):
@@ -90,7 +70,9 @@ def index():
 
 @app.route('/video_feed')
 def video_feed():
-    directories = create_workspace_structure()
+    directories = {
+        'dolphin_setup': os.path.join(os.getcwd(), 'dolphin_setup')
+    }
     
     def gen_frames():
         if not os.path.exists(os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe")):
