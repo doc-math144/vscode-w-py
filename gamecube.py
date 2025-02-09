@@ -13,6 +13,7 @@ class GameCubeConfig:
     graphics_backend: str = "OGL"  # OpenGL backend instead of Null
     window_width: int = 800
     window_height: int = 600
+    profile_name: str = "default" # ADD profile_name to config
 
 class GameCubeEmulator:
     def __init__(self, config: GameCubeConfig):
@@ -30,16 +31,20 @@ class GameCubeEmulator:
             logging.error(f"Invalid ROM file: {rom_path}")
             return False
         
+        # dolphin_dir = os.path.dirname(self.config.dolphin_path) #Unused
+        # user_config_path = os.path.join(dolphin_dir, "UserConfig") #Unused
+
         command = [
             self.config.dolphin_path,
             "--exec=" + rom_path,
             "--batch",
             "--config=Dolphin.Core.GFXBackend=" + self.config.graphics_backend,
             "--config=Dolphin.Core.SerialPort1=0",
-            "--config=Display.Fullscreen=False",  # Changed to windowed mode
+            "--config=Display.Fullscreen=True",  # Changed to windowed mode
             "--config=Display.RenderToMain=True", # Ensure rendering to main window
             "--config=Display.DisableScreenSaver=True",
-            "--config=Display.Resolution=" + f"{self.config.window_width}x{self.config.window_height}"
+            "--config=Display.Resolution=" + f"{self.config.window_width}x{self.config.window_height}",
+            #f"--user-config={user_config_path}" # Use user-config instead of profile #Unused
         ]
 
         # Add controller configurations
@@ -49,6 +54,10 @@ class GameCubeEmulator:
         # Add memory card configurations
         command.append(f"--config=MemoryCardA.Path={os.path.join(self.config.memcard_directory, 'MemoryCardA.raw')}")
         command.append(f"--config=MemoryCardB.Path={os.path.join(self.config.memcard_directory, 'MemoryCardB.raw')}")
+        
+        # Set the profile name for all controller ports
+        for port in range(4):  # Assuming 4 controller ports
+            command.append(f"--config=GCPad{port}.Profile={self.config.profile_name}")
         
         logging.info(f"Starting game with command: {command}")
         
