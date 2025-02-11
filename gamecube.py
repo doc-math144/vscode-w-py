@@ -31,8 +31,8 @@ class GameCubeEmulator:
             logging.error(f"Invalid ROM file: {rom_path}")
             return False
         
-        # dolphin_dir = os.path.dirname(self.config.dolphin_path) #Unused
-        # user_config_path = os.path.join(dolphin_dir, "UserConfig") #Unused
+        dolphin_dir = os.path.dirname(self.config.dolphin_path)
+        user_config_path = os.path.join(dolphin_dir, "Profiles")
 
         command = [
             self.config.dolphin_path,
@@ -44,7 +44,7 @@ class GameCubeEmulator:
             "--config=Display.RenderToMain=True", # Ensure rendering to main window
             "--config=Display.DisableScreenSaver=True",
             "--config=Display.Resolution=" + f"{self.config.window_width}x{self.config.window_height}",
-            #f"--user-config={user_config_path}" # Use user-config instead of profile #Unused
+            #f"--profile_name={self.config.profile_name}" # Use profile instead of user-config
         ]
 
         # Add controller configurations
