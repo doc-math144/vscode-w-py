@@ -12,7 +12,7 @@ DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC | OpenGL | HLE | Super Mario S
 def capture_dolphin_window():
     # Manual adjustment values - modify these as needed
     CAPTURE_X = 147        # X position to start capture from
-    CAPTURE_Y = 0        # Y position to start capture from
+    CAPTURE_Y = -10        # Y position to start capture from
     CAPTURE_WIDTH = 3840  # Width of capture region
     CAPTURE_HEIGHT = 2160 # Height of capture region
 
@@ -51,8 +51,8 @@ def capture_dolphin_window():
     # Manual crop adjustments (override automatic cropping)
     CROP_X1 = 190 # Adjust as needed
     CROP_X2 = TARGET_WIDTH - 190 # Adjust as needed
-    CROP_Y1 = 30 # Adjust as needed
-    CROP_Y2 = TARGET_HEIGHT - 30 # Adjust as needed
+    CROP_Y1 = 45 # Adjust as needed
+    CROP_Y2 = TARGET_HEIGHT - 45 # Adjust as needed
 
     hwnd = win32gui.FindWindow(None, DOLPHIN_SPECIFIC_TITLE)
     if not hwnd:
