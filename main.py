@@ -41,7 +41,7 @@ def is_dolphin_running():
             return True
     return False
 
-def start_web_server():
+#def start_web_server():
     try:
         # Wait a bit to ensure Dolphin window is ready
         time.sleep(3)
@@ -94,10 +94,19 @@ def main():
         extract_7z_file(dolphin_setup_path, setup_dir)
         move_ini_files(setup_dir)
 
+    # Use environment variables for paths
+    dolphin_path = os.environ.get('DOLPHIN_PATH')
+    iso_path = os.environ.get('ISO_PATH')
+    memcard_directory = os.environ.get('MEMCARD_DIRECTORY')
+
+    if not all([dolphin_path, iso_path, memcard_directory]):
+        logging.error("Missing environment variables for Dolphin setup.")
+        return
+
     config = GameCubeConfig(
-        dolphin_path=os.path.join(directories['dolphin_setup'], "Dolphin-x64", "Dolphin.exe"),
-        rom_directory=directories['game'],
-        memcard_directory=directories['memcards'],
+        dolphin_path=dolphin_path,
+        rom_directory=os.path.dirname(iso_path),
+        memcard_directory=memcard_directory,
         controller_config={
             0: {"type": "GCPad", "device": 0}
         }
@@ -106,8 +115,8 @@ def main():
     emulator = GameCubeEmulator(config)
     
     # Start web server in separate thread
-    web_thread = threading.Thread(target=start_web_server, daemon=True)
-    web_thread.start()
+    #web_thread = threading.Thread(target=start_web_server, daemon=True)
+    #web_thread.start()
 
     # Only launch new Dolphin instance if one isn't already running
     if not dolphin_running and os.path.exists(config.dolphin_path):

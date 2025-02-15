@@ -44,7 +44,7 @@
 <body>
     <h1>Dolphin Emulator Stream</h1>
     <div class="stream-container">
-        <img class="stream-feed" src="{{ url_for('video_feed') }}" width="800" alt="Dolphin Stream" 
+        <img class="stream-feed" src="{{ url_for('main.video_feed') }}" width="800" alt="Dolphin Stream" 
              onerror="this.style.display='none';document.getElementById('error-msg').style.display='block';">
         <div id="error-msg" class="error-message">
             Unable to connect to video feed. Please ensure Dolphin is running.
