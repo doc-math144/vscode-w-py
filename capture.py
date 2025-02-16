@@ -7,11 +7,11 @@ import logging
 import time
 from typing import Optional
 
-DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC | OpenGL | HLE | Super Mario Sunburn (GMSE03)"
+DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC | OpenGL | HLE | Super Mario Sunshine (GMSP01)"
 
 def capture_dolphin_window():
     # Manual adjustment values - modify these as needed
-    CAPTURE_X = 180        # X position to start capture from
+    CAPTURE_X = 147        # X position to start capture from
     CAPTURE_Y = 0        # Y position to start capture from
     CAPTURE_WIDTH = 3840  # Width of capture region
     CAPTURE_HEIGHT = 2160 # Height of capture region
@@ -19,40 +19,11 @@ def capture_dolphin_window():
     TARGET_WIDTH = 1280   # 720p width
     TARGET_HEIGHT = 720  # 720p height
 
-    # Enforce 4:3 aspect ratio
-    aspect_ratio = 4 / 3
-    current_aspect_ratio = TARGET_WIDTH / TARGET_HEIGHT
-
-    if current_aspect_ratio > aspect_ratio:
-        # Wider than 4:3, crop width
-        new_width = int(TARGET_HEIGHT * aspect_ratio)
-        crop_x1 = (TARGET_WIDTH - new_width) // 2
-        crop_x2 = crop_x1 + new_width
-        CROP_X1 = crop_x1
-        CROP_X2 = crop_x2
-        CROP_Y1 = 0
-        CROP_Y2 = TARGET_HEIGHT
-    elif current_aspect_ratio < aspect_ratio:
-        # Taller than 4:3, crop height (not common, but handled)
-        new_height = int(TARGET_WIDTH / aspect_ratio)
-        crop_y1 = (TARGET_HEIGHT - new_height) // 2
-        crop_y2 = crop_y1 + new_height
-        CROP_X1 = 0
-        CROP_X2 = TARGET_WIDTH
-        CROP_Y1 = crop_y1
-        CROP_Y2 = crop_y2
-    else:
-        # Already 4:3, no crop needed
-        CROP_X1 = 0
-        CROP_X2 = TARGET_WIDTH - 0
-        CROP_Y1 = 0
-        CROP_Y2 = TARGET_HEIGHT - 0
-
     # Manual crop adjustments (override automatic cropping)
-    CROP_X1 = 200 # Adjust as needed
-    CROP_X2 = TARGET_WIDTH - 200 # Adjust as needed
-    CROP_Y1 = 60 # Adjust as needed
-    CROP_Y2 = TARGET_HEIGHT - 60# Adjust as needed
+    CROP_X1 = 190 # Adjust as needed
+    CROP_X2 = TARGET_WIDTH - 190 # Adjust as needed
+    CROP_Y1 = 30 # Adjust as needed
+    CROP_Y2 = TARGET_HEIGHT - 30# Adjust as needed
 
     hwnd = win32gui.FindWindow(None, DOLPHIN_SPECIFIC_TITLE)
     if not hwnd:
