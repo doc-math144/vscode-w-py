@@ -39,25 +39,112 @@
             color: #ff4444;
             text-align: center;
         }
+        .fullscreen-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .fullscreen-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <h1>Dolphin Emulator Stream</h1>
-    <div class="stream-container">
+    <div class="stream-container" id="stream-container">
         <img class="stream-feed" src="{{ url_for('video_feed') }}" width="800" alt="Dolphin Stream" 
              onerror="this.style.display='none';document.getElementById('error-msg').style.display='block';">
         <div id="error-msg" class="error-message">
             Unable to connect to video feed. Please ensure Dolphin is running.
         </div>
     </div>
+    <button class="fullscreen-button" id="fullscreen-button">Full Screen</button>
     <script>
         const img = document.querySelector('.stream-feed');
         const errorMsg = document.getElementById('error-msg');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        const streamContainer = document.getElementById('stream-container');
         
         img.onload = function() {
             img.style.display = 'block';
             errorMsg.style.display = 'none';
         };
+
+        fullscreenButton.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                streamContainer.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        const sendControllerInput = (input) => {
+            console.log('Sending controller input:', input);  // Debugging statement
+            fetch('/controller_input', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(input)
+            });
+        };
+
+        let previousButtons = [];
+        let previousAxes = [];
+        let buttonPressTimes = {};
+        let axisChangeTimes = {};
+
+        window.addEventListener('gamepadconnected', (event) => {
+            console.log('Gamepad connected:', event.gamepad);
+            const gamepad = event.gamepad;
+
+            const updateControllerInput = () => {
+                const gp = navigator.getGamepads()[gamepad.index];
+                if (gp) {
+                    const axes = gp.axes.slice(0, 4);
+                    const buttons = gp.buttons.map(button => button.pressed ? 1 : 0).slice(0, 2);
+                    const currentTime = Date.now();
+
+                    // Check if buttons state has changed
+                    buttons.forEach((button, index) => {
+                        if (button !== previousButtons[index]) {
+                            if (button === 1) {
+                                buttonPressTimes[index] = currentTime;
+                            } else {
+                                const duration = currentTime - buttonPressTimes[index];
+                                sendControllerInput({ type: 'button', index, state: button, duration });
+                                delete buttonPressTimes[index];
+                            }
+                        }
+                    });
+
+                    // Check if axes state has changed
+                    axes.forEach((axis, index) => {
+                        if (axis !== previousAxes[index]) {
+                            if (axis !== 0) {
+                                axisChangeTimes[index] = currentTime;
+                            } else {
+                                const duration = currentTime - axisChangeTimes[index];
+                                sendControllerInput({ type: 'axis', index, state: axis, duration });
+                                delete axisChangeTimes[index];
+                            }
+                        }
+                    });
+
+                    previousButtons = buttons;
+                    previousAxes = axes;
+                }
+                requestAnimationFrame(updateControllerInput);
+            };
+
+            updateControllerInput();
+        });
     </script>
 </body>
 </html>
