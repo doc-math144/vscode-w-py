@@ -28,19 +28,16 @@ def find_dolphin_path():
     return None
 
 def generate_output():
-    # Get necessary paths and configurations from environment variables
-    dolphin_path = os.environ.get('DOLPHIN_PATH')
-    iso_path = os.environ.get('ISO_PATH')
-    memcard_directory = os.environ.get('MEMCARD_DIRECTORY')
-
-    if not all([dolphin_path, iso_path, memcard_directory]):
-        logging.error("Missing environment variables for Dolphin setup.")
+    # Replace environment variables with direct path detection
+    dolphin_path = find_dolphin_path()
+    if not dolphin_path:
+        logging.error("Dolphin process not found")
         return
 
     config = GameCubeConfig(
         dolphin_path=dolphin_path,
-        rom_directory=os.path.dirname(iso_path),  # Extract directory from ISO path
-        memcard_directory=memcard_directory,
+        rom_directory=os.path.join(os.getcwd(), 'game'),  # Use local directory structure
+        memcard_directory=os.path.join(os.getcwd(), 'memcards'),
         controller_config={
             0: {"type": "GCPad", "device": 0}
         }
@@ -49,8 +46,7 @@ def generate_output():
     emulator = GameCubeEmulator(config)
     
     if os.path.exists(config.dolphin_path):
-        logging.info(f"Starting Dolphin at: {config.dolphin_path}")
-        emulator.start_game(iso_path)
+        logging.info(f"Found running Dolphin at: {config.dolphin_path}")
         
         # Wait for Dolphin window to appear
         max_attempts = 30
