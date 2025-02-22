@@ -11,6 +11,7 @@ game/
 roms/
 memcards/
 saves/
+web_server_running.flag
 */.iso
 */.bin
 */.cue
