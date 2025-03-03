@@ -7,7 +7,30 @@ import logging
 import time
 from typing import Optional
 
-DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC | OpenGL | HLE | Super Mario Sunshine (GMSP01)"
+# Function to find any Dolphin emulator window
+def find_dolphin_window() -> Optional[int]:
+    """Find Dolphin emulator window by pattern matching"""
+    def enum_windows_callback(hwnd, results):
+        if win32gui.IsWindowVisible(hwnd):
+            window_title = win32gui.GetWindowText(hwnd)
+            if window_title.startswith("Dolphin") and " | " in window_title:
+                results.append(hwnd)
+        return True
+    
+    window_handles = []
+    win32gui.EnumWindows(enum_windows_callback, window_handles)
+    
+    if window_handles:
+        return window_handles[0]
+    return None
+
+# Get the current Dolphin window title if it exists, otherwise use a default
+DOLPHIN_SPECIFIC_TITLE = ""
+hwnd = find_dolphin_window()
+if hwnd:
+    DOLPHIN_SPECIFIC_TITLE = win32gui.GetWindowText(hwnd)
+else:
+    DOLPHIN_SPECIFIC_TITLE = "Dolphin 2412 | JIT64 DC "  # Fallback value
 
 def capture_dolphin_window():
     # Manual adjustment values - modify these as needed
