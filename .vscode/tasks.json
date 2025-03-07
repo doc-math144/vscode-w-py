@@ -46,11 +46,14 @@
         },
         {
             "label": "Clean All",
-            "dependsOn": ["Clean .venv", "Clean directories"],
-            "dependsOrder": "parallel",
+            "dependsOn": [
+            "Clean .venv",
+            "Clean directories"
+            ],
+            "dependsOrder": "sequence",
             "group": {
-                "kind": "none",
-                "isDefault": false
+            "kind": "none",
+            "isDefault": false
             },
             "problemMatcher": []
         }
