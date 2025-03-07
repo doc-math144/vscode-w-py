@@ -13,7 +13,7 @@ def find_dolphin_window() -> Optional[int]:
     def enum_windows_callback(hwnd, results):
         if win32gui.IsWindowVisible(hwnd):
             window_title = win32gui.GetWindowText(hwnd)
-            if window_title.startswith("Dolphin") and " | " in window_title:
+            if window_title.startswith("Dolphin 2412") and " | " in window_title:
                 results.append(hwnd)
         return True
     
@@ -53,6 +53,11 @@ def capture_dolphin_window():
         logging.error("Dolphin window not found")
         return None
 
+    wDC = None
+    dcObj = None
+    cDC = None
+    dataBitMap = None
+
     try:
         wDC = win32gui.GetWindowDC(hwnd)
         dcObj = win32ui.CreateDCFromHandle(wDC)
@@ -69,12 +74,6 @@ def capture_dolphin_window():
         img = np.frombuffer(signedIntsArray, dtype='uint8')
         img.shape = (CAPTURE_HEIGHT, CAPTURE_WIDTH, 4)
         
-        # Cleanup
-        dcObj.DeleteDC()
-        cDC.DeleteDC()
-        win32gui.ReleaseDC(hwnd, wDC)
-        win32gui.DeleteObject(dataBitMap.GetHandle())
-
         # Resize image to 720p
         resized_img = cv2.resize(img, (TARGET_WIDTH, TARGET_HEIGHT), interpolation=cv2.INTER_AREA)
 
@@ -86,3 +85,10 @@ def capture_dolphin_window():
     except Exception as e:
         logging.error(f"Capture failed: {str(e)}")
         return None
+
+    finally:
+        # Always clean up resources
+        if dcObj: dcObj.DeleteDC()
+        if cDC: cDC.DeleteDC()
+        if wDC: win32gui.ReleaseDC(hwnd, wDC)
+        if dataBitMap: win32gui.DeleteObject(dataBitMap.GetHandle())

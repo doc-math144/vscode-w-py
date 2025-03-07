@@ -6,6 +6,7 @@ import threading
 import time
 import psutil
 import argparse
+import urls
 
 from package_manager import install_package, install_dependencies
 from file_handler import download_dolphin_setup, extract_7z_file, move_ini_files
@@ -104,6 +105,8 @@ def main():
     )
     
     emulator = GameCubeEmulator(config)
+    # Make it available to the urls module
+    urls.emulator_instance = emulator
     
     # Start web server in separate thread
     web_thread = threading.Thread(target=start_web_server, daemon=True)

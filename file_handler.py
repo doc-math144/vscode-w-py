@@ -6,18 +6,26 @@ import py7zr
 
 def download_dolphin_setup(url, setup_dir):
     local_filename = os.path.join(setup_dir, url.split('/')[-1])
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    logging.info(f"Downloaded Dolphin setup file to: {local_filename}")
+    try:
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        logging.info(f"Downloaded Dolphin setup file to: {local_filename}")
+    except ConnectionError:
+        logging.error("Network connectivity issue occurred during download.")
+    except Exception as e:
+        logging.error(f"An error occurred during download: {e}")
     return local_filename
 
 def extract_7z_file(file_path, extract_to):
-    with py7zr.SevenZipFile(file_path, mode='r') as archive:
-        archive.extractall(path=extract_to)
-    logging.info(f"Extracted {file_path} to {extract_to}")
+    try:
+        with py7zr.SevenZipFile(file_path, mode='r') as archive:
+            archive.extractall(path=extract_to)
+        logging.info(f"Extracted {file_path} to {extract_to}")
+    except Exception as e:
+        logging.error(f"An error occurred during extraction: {e}")
 
 def move_ini_files(dolphin_setup_dir):
     ini_source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'profiles_to_include')
